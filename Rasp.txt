@@ -1,0 +1,193 @@
+
+STEP1: REMOVE OLD OPEN CV VERSION
+sudo apt-get remove libopencv*
+sudo apt-get autoremove
+
+STEP2: CHECK YOUR RASP PI STORE SPACE
+df -h
+
+STEP3: IF YOUR Free SPACE IS Not ENOUGH (About 2GB). You can use USB to keep OPENCV install package.
+
+STEP4: Update your system by bellow cmd
+sudo apt-get update
+sudo apt-get upgrade
+sudo rpi-update
+sudo reboot
+
+STEP5: INSTALL DEV TOOL
+sudo apt-get install build-essential cmake cmake-curses-gui pkg-config
+
+STEP6: INSTALL REQUIRE LIB
+sudo apt-get install \
+  libjpeg-dev \
+  libtiff5-dev \
+  libjasper-dev \
+  libpng12-dev \
+  libavcodec-dev \
+  libavformat-dev \
+  libswscale-dev \
+  libeigen3-dev \
+  libxvidcore-dev \
+  libx264-dev \
+  libgtk2.0-dev
+
+STEP7: IF YOU USE RASP CAMERA THEN YOU NEED INSTALL Video4Linux
+sudo apt-get -y install libv4l-dev v4l-utils
+sudo modprobe bcm2835-v4l2
+v4l2-ctl --list-devices
+
+STEP8: INSTALL DEV TOOL
+sudo apt-get install build-essential cmake cmake-curses-gui pkg-config
+
+STEP9: INSTALL REQUIRE LIB
+sudo apt-get install \
+  libjpeg-dev \
+  libtiff5-dev \
+  libjasper-dev \
+  libpng12-dev \
+  libavcodec-dev \
+  libavformat-dev \
+  libswscale-dev \
+  libeigen3-dev \
+  libxvidcore-dev \
+  libx264-dev \
+  libgtk2.0-dev
+
+STEP10: IF YOU USE RASP CAMERA THEN YOU NEED INSTALL Video4Linux
+sudo apt-get -y install libv4l-dev v4l-utils
+sudo modprobe bcm2835-v4l2
+v4l2-ctl --list-devices
+
+STEP11: INSTALL PYTHON  & NUMPY
+sudo apt-get install python2.7-dev python2-numpy
+sudo apt-get install python3-dev python3-numpy
+
+STEP12: DOWNLOAD OPENCV PACKAGE
+sudo mount /dev/your-dev-name /home/pi/usbmem
+mkdir /home/pi/usbmem/opencv
+cd  /home/pi/usbmem/opencv
+wget https://github.com/opencv/opencv/archive/3.2.0.zip -O opencv_source.zip
+wget https://github.com/opencv/opencv_contrib/archive/3.2.0.zip -O opencv_contrib.zip
+
+STEP13: UNZIP PACKAGE
+cd /home/pi/usbmem/opencv
+unzip opencv_source.zip
+unzip opencv_contrib.zip
+
+STEP14: CREATE FOLDER FOR BUILD
+cd /home/pi/usbmem/opencv/opencv-3.2.0
+mkdir build
+cd build
+
+STEP15: Start to configure your build using command line switch
+cmake -D CMAKE_BUILD_TYPE=RELEASE \
+ -D CMAKE_INSTALL_PREFIX=/usr/local \
+ -D BUILD_WITH_DEBUG_INFO=OFF \
+ -D BUILD_DOCS=OFF \
+ -D BUILD_EXAMPLES=OFF \
+ -D BUILD_TESTS=OFF \
+ -D BUILD_opencv_ts=OFF \
+ -D BUILD_PERF_TESTS=OFF \
+ -D INSTALL_C_EXAMPLES=ON \
+ -D INSTALL_PYTHON_EXAMPLES=ON \
+ -D OPENCV_EXTRA_MODULES_PATH=../../opencv_contrib-3.2.0/modules \
+ -D ENABLE_NEON=ON \
+ -D WITH_LIBV4L=ON \
+        ../
+
+STEP16: Review/modify the configuration using CMake TextGUI
+
+ You can change some command line switch from above or you can use ccmake to configure all available options
+$ ccmake ../
+                                       Page  1 of ..
+ ANT_EXECUTABLE                   ANT_EXECUTABLE-NOTFOUND
+ BUILD_CUDA_STUBS                 OFF
+ BUILD_DOCS                       OFF
+ BUILD_EXAMPLES                   OFF
+ BUILD_JASPER                     ON
+ BUILD_JPEG                       ON
+ BUILD_LIBPROTOBUF_FROM_SOURCES   OFF
+ BUILD_OPENEXR                    OFF
+ ... more options here ....
+
+Press [enter] to edit option
+Press [c] to configure
+Press [h] for help           Press [q] to quit without generating
+Press [t] to toggle advanced mode (Currently Off)
+
+STEP17: BUILD OPENCV
+make -j4
+Once completed(take about 1hous) will show [100%] Built target ...
+
+STEP18: INSTALL OPENCV
+sudo make install
+sudo ldconfig
+
+STEP19:
+import numpy as np
+import cv2
+ 
+cap = cv2.VideoCapture(0)
+ 
+if cap.isOpened() == False:
+    print('Unable to open the camera')
+else:
+    print('Start grabbing, press a key on Live window to terminate')
+    cv2.namedWindow('Live');
+    cap.set(cv2.CAP_PROP_FRAME_WIDTH,320)
+    cap.set(cv2.CAP_PROP_FRAME_HEIGHT,240)
+    while( cap.isOpened() ):
+        ret,frame = cap.read()
+        if ret==False:
+            print('Unable to grab from the camera')
+            break
+ 
+        cv2.imshow('Live',frame)
+        #cv2.waitKey(0);
+        key = cv2.waitKey(5)
+        if key==255: key=-1 #Solve bug in 3.2.0
+        if key >= 0:
+            break
+    print('Closing the camera')
+ 
+cap.release()
+cv2.destroyAllWindows()
+print('bye bye!')
+quit()
+
+#include <stdio.h>
+#include <opencv2/opencv.hpp>
+#include <opencv2/highgui.hpp>
+using namespace cv;
+using namespace std;
+ 
+int main(int argc,char ** argv)
+{
+  VideoCapture cap(0);
+  if (!cap.isOpened()) {
+    cerr << "ERROR: Unable to open the camera" << endl;
+    return 0;
+  }
+ 
+  Mat frame;
+  cout << "Start grabbing, press a key on Live window to terminate" << endl;
+  while(1) {
+    cap >> frame;
+    if (frame.empty()) {
+        cerr << "ERROR: Unable to grab from the camera" << endl;
+        break;
+    }
+    imshow("Live",frame);
+    int key = cv::waitKey(5);
+    key = (key==255) ? -1 : key; //#Solve bug in 3.2.0
+    if (key>=0)
+      break;
+  }
+ 
+  cout << "Closing the camera" << endl;
+  cap.release();
+  destroyAllWindows();
+  cout << "bye!" <<endl;
+  return 0;
+}
+
